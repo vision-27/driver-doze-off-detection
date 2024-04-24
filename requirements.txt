@@ -4,4 +4,4 @@ imutils
 scipy
 numpy
 pyttsx3
-flask=3.0.0
+flask==3.0.0
