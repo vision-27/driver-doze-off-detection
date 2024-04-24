@@ -1,18 +1,25 @@
-# python drowniness_yawn.py --webcam webcam_index
+import threading
 from scipy.spatial import distance as dist
-from imutils.video import VideoStream
 from imutils import face_utils
 import numpy as np
-import imutils
 import time
 import dlib
 import cv2
 import pyttsx3
+from flask import Flask, render_template, Response, request
 
-v = pyttsx3.init()
-voices = v.getProperty('voices')
-v.setProperty("rate", 178)
-v.setProperty('voice', voices[1].id)
+
+def alert_driver():
+    v = pyttsx3.init()
+    voices = v.getProperty('voices')
+    v.setProperty("rate", 178)
+    v.setProperty('voice', voices[1].id)
+    v.say("Alert: You seem to be drowsy. Please take a break.")
+    v.runAndWait()
+
+def alert_driver_thread():
+    alert_thread = threading.Thread(target=alert_driver)
+    alert_thread.start()
 
 
 def eye_aspect_ratio(eye):
@@ -53,96 +60,126 @@ def lip_distance(shape):
     return distance
 
 
-EYE_AR_THRESH = 0.3
-EYE_AR_CONSEC_FRAMES = 30
+
 YAWN_THRESH = 14
 alarm_status = False
 alarm_status2 = False
 saying = False
+global COUNTER
+global YAWN_COUNTER
+global EYE_AR_THRESH
+global EYE_AR_CONSEC_FRAMES
+
+EYE_AR_THRESH = 0.26
+EYE_AR_CONSEC_FRAMES = 45
+SWITCH = 0
 COUNTER = 0
 YAWN_COUNTER = 0
 
 
 detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+eye_cascade = cv2.CascadeClassifier("haarcascade_eye_tree_eyeglasses.xml")
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
 
 
-vs = VideoStream(0).start()
-# vs= VideoStream(usePiCamera=True).start()
-time.sleep(1.0)
 
-while True:
 
-    frame = vs.read()
-    frame = imutils.resize(frame, width=450)
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    # rects = detector(gray, 0)
-    rects = detector.detectMultiScale(gray, scaleFactor=1.1,
-                                      minNeighbors=5, minSize=(30, 30),
-                                      flags=cv2.CASCADE_SCALE_IMAGE)
-
-    # for rect in rects:
-    for (x, y, w, h) in rects:
-        rect = dlib.rectangle(int(x), int(y), int(x + w), int(y + h))
-
-        shape = predictor(gray, rect)
-        shape = face_utils.shape_to_np(shape)
-
-        eye = final_ear(shape)
-
-        ear = eye[0]
-        leftEye = eye[1]
-        rightEye = eye[2]
-
-        distance = lip_distance(shape)
-
-        leftEyeHull = cv2.convexHull(leftEye)
-        rightEyeHull = cv2.convexHull(rightEye)
-        cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
-        cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
-
-        lip = shape[48:60]
-        cv2.drawContours(frame, [lip], -1, (0, 255, 0), 1)
-
-        if ear < EYE_AR_THRESH:
-            COUNTER += 1
-
-            if COUNTER >= EYE_AR_CONSEC_FRAMES:
-                v.say("Alert!!!! WAKE UP DUDE")
-                v.runAndWait()
-                cv2.putText(frame, "DROWSINESS ALERT!", (10, 100),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-
-                
-
-        else:
-            COUNTER = 0
+def camera_function():
+    global COUNTER, YAWN_COUNTER, EYE_AR_THRESH, EYE_AR_CONSEC_FRAMES
+    while True:
+        
+        success,frame = camera.read()
+        rects = detector.detectMultiScale(frame,1.1,7)
+        
+        for (x, y, w, h) in rects:
+            rect = dlib.rectangle(int(x), int(y), int(x + w), int(y + h))
             
+            shape = predictor(frame, rect)
+            shape = face_utils.shape_to_np(shape)
 
-        if (distance > YAWN_THRESH):
-            YAWN_COUNTER+=1
-            if YAWN_COUNTER>=2:
-                v.say("Stop the car")
-                cv2.putText(frame, "Yawn Alert", (10, 130),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-                YAWN_COUNTER = 0
+            eye = final_ear(shape)
+            
+            ear = eye[0]
+            leftEye = eye[1]
+            rightEye = eye[2]
+
+            distance = lip_distance(shape)
+            leftEyeHull = cv2.convexHull(leftEye)
+            rightEyeHull = cv2.convexHull(rightEye)
+            cv2.drawContours(frame, [leftEyeHull], -1, (0, 255, 0), 1)
+            cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
+            lip = shape[48:60]
+            cv2.drawContours(frame, [lip], -1, (0, 255, 0), 1)
+
+            if ear < EYE_AR_THRESH:
+                COUNTER += 1
+
+                if COUNTER >= EYE_AR_CONSEC_FRAMES:
+                    alert_driver_thread()
+                    cv2.putText(frame, "DROWSINESS ALERT!", (10, 100),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    COUNTER = 0
+
+
+            if (distance > YAWN_THRESH):
+                YAWN_COUNTER+=1
+                if YAWN_COUNTER%3 == 0 and YAWN_COUNTER!=0 :
+                    alert_driver_thread
+                    cv2.putText(frame, "Yawn Alert", (10, 130),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    YAWN_COUNTER = 0
+                    
+
+            cv2.putText(frame, "EAR: {:.2f}".format(ear), (300, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            cv2.putText(frame, "YAWN: {:.2f}".format(distance), (300, 60),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            cv2.putText(frame, "LEFTEYE: {:.2f}".format(eye_aspect_ratio(leftEye)), (0, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            cv2.putText(frame, "RIGHTEYE: {:.2f}".format(eye_aspect_ratio(rightEye)), (0, 60),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+
+        try:
+                ret, buffer = cv2.imencode('.jpg', cv2.flip(frame,1))
+                frame = buffer.tobytes()
+                yield (b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        except Exception as e:
+                pass
+
+
+app = Flask(__name__, template_folder='./templates')
+
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(camera_function(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/requests',methods=['POST','GET'])
+def tasks():
+    global SWITCH,camera
+    if request.method == 'POST':  
+        if request.form.get('stop') == 'Stop/Start':
+            if(SWITCH==1):
+                SWITCH=0
+                camera.release()
+                cv2.destroyAllWindows()
+                print("camera stopping")
                 
+            else:
+                print("starting camera")
+                camera = cv2.VideoCapture(0)
+                SWITCH=1
 
-        cv2.putText(frame, "EAR: {:.2f}".format(ear), (300, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "YAWN: {:.2f}".format(distance), (300, 60),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "LEFTEYE: {:.2f}".format(eye_aspect_ratio(leftEye)), (0, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "RIGHTEYE: {:.2f}".format(eye_aspect_ratio(rightEye)), (0, 60),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    elif request.method=='GET':
+        return render_template('index.html')
+    return render_template('index.html')
 
-    cv2.imshow("Frame", frame)
-    key = cv2.waitKey(1) & 0xFF
 
-    if key == ord("q"):
-        break
 
-cv2.destroyAllWindows()
-vs.stop()
+app.run(debug=True)
