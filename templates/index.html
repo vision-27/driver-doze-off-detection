@@ -24,6 +24,13 @@
         </div>
       </div>
       <button name = "loc" class="btn w-64 rounded-full" id="get-location">Get My Location</button>
+
+      <div id="location-list">
+        <ul class="list-group">
+          </ul>
+      </div>
+    </div>
+
       <script>
         const getLocationButton = document.getElementById("get-location");
         
@@ -49,6 +56,29 @@
               xhr.onload = function() {
                 if (xhr.status === 200) {
                   console.log("Location data sent successfully!");
+                  const response = JSON.parse(xhr.responseText);
+                  const gps_url = "https://www.google.com/maps/dir/"+latitude+","+longitude+"/"
+                  if (typeof response === "object" && response !== null) {  
+                    const listElement = document.getElementById("location-list"); 
+                    if (listElement){
+                    listElement.innerHTML = "";
+
+                    let htmlList = "";
+                    for (const key in response) {
+                      if (response.hasOwnProperty(key)) { 
+                        htmlList += `<li class="list-group-item">`;
+                        htmlList += `<a href="${gps_url}${response[key]}">${key}: ${response[key]}</a>`;
+                      }
+                    }
+                    listElement.innerHTML = htmlList;
+                  }
+                  else {
+  console.error("Element with ID 'location-list' not found!");
+}
+                  } else {
+                    console.error("Unexpected response format. Expected object.");
+                  }
+                  
                 } else {
                   console.error("Error sending location data:", xhr.statusText);
                   displayMessage("There was an error sending your location data.");

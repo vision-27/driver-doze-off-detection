@@ -8,6 +8,10 @@ import cv2
 import pyttsx3
 from flask import Flask, render_template, Response, request
 
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+
+
 
 def alert_driver():
     v = pyttsx3.init()
@@ -182,18 +186,40 @@ def tasks():
 
 
 @app.route("/location",methods=['POST'])
-def safe_spots():
+def location_fn():
     data = request.get_json()
 
     if data is not None:
         latitude = data.get('lat')
         longitude = data.get('long')  
-        print(latitude,longitude)
     else:
         print("unable to get data")
-    
-    return "Data received successfully!", 200 
+    locs = find_nearby_places(latitude,longitude)
 
+    return locs
+
+def find_nearby_places(lat, lon, radius=5):
+    loc_list = {}
+    geolocator = Nominatim(user_agent="nearby_search")
+    location = geolocator.reverse((lat, lon))
+    print(f"\nYour current location: {location}\n")
+    count = 0
+    
+    query = f"hotels near {lat}, {lon}"
+    try:
+        places = geolocator.geocode(query, exactly_one=False, limit=None)
+        if places:
+            for place in places:
+                place_coords = (place.latitude, place.longitude)
+                place_distance = geodesic((lat, lon), place_coords).kilometers
+                if place_distance <= radius:
+                    loc_list[count] = (f"{place.address.split(',')[0]} ({place_distance:.2f} km)")
+                    count+=1
+            return loc_list
+        else:
+            print("No nearby places found for the given type.")
+    except:
+        print("Error: Unable to fetch nearby places.")
 
 
 
