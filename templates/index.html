@@ -26,17 +26,37 @@
       <button name = "loc" class="btn w-64 rounded-full" id="get-location">Get My Location</button>
       <script>
         const getLocationButton = document.getElementById("get-location");
+        
         getLocationButton.addEventListener("click", function() {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
               const latitude = position.coords.latitude;
               const longitude = position.coords.longitude;
+        
 
-              // Use these coordinates to find nearby safe stops (explained later)
-              findSafeStops(latitude, longitude);
+              const xhr = new XMLHttpRequest();
+              xhr.open("POST", "/location");
+
+              xhr.setRequestHeader("Content-Type", "application/json");
+        
+              const data = JSON.stringify({  
+                lat: latitude,           
+                long: longitude          
+              });
+              console.log(data);
+              xhr.send(data);
+        
+              xhr.onload = function() {
+                if (xhr.status === 200) {
+                  console.log("Location data sent successfully!");
+                } else {
+                  console.error("Error sending location data:", xhr.statusText);
+                  displayMessage("There was an error sending your location data.");
+                }
+              };
+        
             }, function(error) {
               console.error("Error getting location:", error.message);
-              // Handle location access error (e.g., user denied permission)
               displayMessage("Location access denied. Please enable to find safe stops.");
             });
           } else {
@@ -44,7 +64,7 @@
             displayMessage("This browser does not support location access.");
           }
         });
-      </script>    
+        </script>
     </div>
 
       

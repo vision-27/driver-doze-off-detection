@@ -181,5 +181,20 @@ def tasks():
     return render_template('index.html')
 
 
+@app.route("/location",methods=['POST'])
+def safe_spots():
+    data = request.get_json()
+
+    if data is not None:
+        latitude = data.get('lat')
+        longitude = data.get('long')  
+        print(latitude,longitude)
+    else:
+        print("unable to get data")
+    
+    return "Data received successfully!", 200 
+
+
+
 
 app.run(debug= True)
