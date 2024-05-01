@@ -1,15 +1,52 @@
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .container {
+      padding-left: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+  
+
+</head>
+
 <body>
     <div class="container">
-        <div class="row">
-            <div class="col-lg-8  offset-lg-2">
-    
-                
-                <h2 class="mt-5">Driver Drowsiness detection</h2>
-                <form method="post" action="{{ url_for('tasks') }}">
-                <input type="submit" value="Stop/Start" name="stop" />
-                </form>
-                <img src="{{ url_for('video_feed') }}" height="80%" >
-            </div>
+      <div class="row">
+        <div class="col-lg-8  offset-lg-2">
+            <form method="post" action="{{ url_for('tasks') }}">
+            <input type="submit" value="Stop/Start" name="stop" />
+            </form>
+            <img src="{{ url_for('video_feed') }}" height="80%" >
         </div>
+      </div>
+      <button name = "loc" class="btn w-64 rounded-full" id="get-location">Get My Location</button>
+      <script>
+        const getLocationButton = document.getElementById("get-location");
+        getLocationButton.addEventListener("click", function() {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+              const latitude = position.coords.latitude;
+              const longitude = position.coords.longitude;
+
+              // Use these coordinates to find nearby safe stops (explained later)
+              findSafeStops(latitude, longitude);
+            }, function(error) {
+              console.error("Error getting location:", error.message);
+              // Handle location access error (e.g., user denied permission)
+              displayMessage("Location access denied. Please enable to find safe stops.");
+            });
+          } else {
+            console.error("Geolocation is not supported by this browser.");
+            displayMessage("This browser does not support location access.");
+          }
+        });
+      </script>    
     </div>
-    </body>
+
+      
+  
+</body>
