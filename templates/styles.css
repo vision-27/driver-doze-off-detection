@@ -1,0 +1,36 @@
+/* Apply styles to the container */
+.container {
+  padding-left: 80px;
+  display: flex;
+  flex-direction: column; /* Adjusted to column layout */
+  align-items: center;
+}
+
+/* Style the form */
+form {
+  margin-bottom: 20px; /* Add some space below the form */
+}
+
+/* Style the image */
+img {
+  max-height: 80%; /* Adjusted to maximum height */
+  max-width: 100%; /* Ensures image doesn't overflow its container */
+  display: block; /* Ensures the image behaves like a block element */
+  margin-bottom: 20px; /* Add some space below the image */
+}
+
+/* Style the button */
+.btn {
+  margin-bottom: 20px; /* Add some space below the button */
+}
+
+/* Style the list group */
+.list-group {
+  list-style-type: none; /* Remove default list styles */
+  padding: 0; /* Remove default padding */
+}
+
+/* Style list items */
+.list-group-item {
+  margin-bottom: 10px; /* Add some space between list items */
+}
