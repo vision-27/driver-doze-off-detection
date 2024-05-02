@@ -4,15 +4,25 @@
   <style>
     .container {
       padding-left: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: grid;
+      align-items:center;
+      justify-content:center;
+    }
+    .location-button{
+      padding-top: 4%;
+      display: grid;
+      align-items:center;
+      justify-content:center;
+    }
+    .loc-div{
+      padding-top: 4%;
+      display: grid;
+      align-items:center;
+      justify-content:center;
+    
     }
   </style>
-  
-
 </head>
-
 <body>
     <div class="container">
       <div class="row">
@@ -23,13 +33,17 @@
             <img src="{{ url_for('video_feed') }}" height="80%" >
         </div>
       </div>
-      <button name = "loc" class="btn w-64 rounded-full" id="get-location">Get My Location</button>
-
-      <div id="location-list">
-        <ul class="list-group">
-          </ul>
-      </div>
     </div>
+    <div class = "location-button">
+      <button name = "loc" class="btn w-64 rounded-full" id="get-location">Get My Location</button>
+    </div>
+
+    <div class = "loc-div
+    " id="location-list">
+      <ul class="list-group">
+        </ul>
+    </div>
+    
 
       <script>
         const getLocationButton = document.getElementById("get-location");
@@ -57,7 +71,7 @@
                 if (xhr.status === 200) {
                   console.log("Location data sent successfully!");
                   const response = JSON.parse(xhr.responseText);
-                  const gps_url = "https://www.google.com/maps/dir/"+latitude+","+longitude+"/"
+                  const gps_url = "https://www.google.com/maps/dir/"+latitude+","+longitude+"/" 
                   if (typeof response === "object" && response !== null) {  
                     const listElement = document.getElementById("location-list"); 
                     if (listElement){

@@ -205,7 +205,7 @@ def find_nearby_places(lat, lon, radius=5):
     print(f"\nYour current location: {location}\n")
     count = 0
     
-    query = f"hotels near {lat}, {lon}"
+    query = f"hotel near {lat}, {lon}"
     try:
         places = geolocator.geocode(query, exactly_one=False, limit=None)
         if places:
