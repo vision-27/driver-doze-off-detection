@@ -1,6 +1,7 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
-  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .container {
       padding-left: 80px;
@@ -9,21 +10,19 @@
       justify-content: space-between;
     }
   </style>
-  
-
 </head>
 
 <body>
     <div class="container">
       <div class="row">
-        <div class="col-lg-8  offset-lg-2">
+        <div class="col-lg-8 offset-lg-2">
             <form method="post" action="{{ url_for('tasks') }}">
             <input type="submit" value="Stop/Start" name="stop" />
             </form>
             <img src="{{ url_for('video_feed') }}" height="80%" >
         </div>
       </div>
-      <button name = "loc" class="btn w-64 rounded-full" id="get-location">Get My Location</button>
+      <button name="loc" class="btn w-64 rounded-full" id="get-location">Get My Location</button>
 
       <div id="location-list">
         <ul class="list-group">
@@ -31,72 +30,70 @@
       </div>
     </div>
 
-      <script>
-        const getLocationButton = document.getElementById("get-location");
-        
-        getLocationButton.addEventListener("click", function() {
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-              const latitude = position.coords.latitude;
-              const longitude = position.coords.longitude;
-        
+<script>
+  function displayMessage(message) {
+    // Implement your logic to display messages to the user
+    // For example, you can use alert or update the UI dynamically
+    console.error(message); // For debugging, log error messages to console
+  }
 
-              const xhr = new XMLHttpRequest();
-              xhr.open("POST", "/location");
+  const getLocationButton = document.getElementById("get-location");
 
-              xhr.setRequestHeader("Content-Type", "application/json");
-        
-              const data = JSON.stringify({  
-                lat: latitude,           
-                long: longitude          
-              });
-              console.log(data);
-              xhr.send(data);
-        
-              xhr.onload = function() {
-                if (xhr.status === 200) {
-                  console.log("Location data sent successfully!");
-                  const response = JSON.parse(xhr.responseText);
-                  const gps_url = "https://www.google.com/maps/dir/"+latitude+","+longitude+"/"
-                  if (typeof response === "object" && response !== null) {  
-                    const listElement = document.getElementById("location-list"); 
-                    if (listElement){
-                    listElement.innerHTML = "";
+  getLocationButton.addEventListener("click", function() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
 
-                    let htmlList = "";
-                    for (const key in response) {
-                      if (response.hasOwnProperty(key)) { 
-                        htmlList += `<li class="list-group-item">`;
-                        htmlList += `<a href="${gps_url}${response[key]}">${key}: ${response[key]}</a>`;
-                      }
-                    }
-                    listElement.innerHTML = htmlList;
-                  }
-                  else {
-  console.error("Element with ID 'location-list' not found!");
-}
-                  } else {
-                    console.error("Unexpected response format. Expected object.");
-                  }
-                  
-                } else {
-                  console.error("Error sending location data:", xhr.statusText);
-                  displayMessage("There was an error sending your location data.");
-                }
-              };
-        
-            }, function(error) {
-              console.error("Error getting location:", error.message);
-              displayMessage("Location access denied. Please enable to find safe stops.");
-            });
-          } else {
-            console.error("Geolocation is not supported by this browser.");
-            displayMessage("This browser does not support location access.");
-          }
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/location");
+        xhr.setRequestHeader("Content-Type", "application/json");
+
+        const data = JSON.stringify({  
+          lat: latitude,           
+          long: longitude          
         });
-        </script>
-    </div>
 
-      
-  
+        xhr.send(data);
+
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            console.log("Location data sent successfully!");
+            const response = JSON.parse(xhr.responseText);
+            const gps_url = "https://www.google.com/maps/dir/" + latitude + "," + longitude + "/";
+            if (typeof response === "object" && response !== null) {  
+              const listElement = document.getElementById("location-list"); 
+              if (listElement) {
+                listElement.innerHTML = "";
+
+                let htmlList = "";
+                for (const key in response) {
+                  if (response.hasOwnProperty(key)) { 
+                    htmlList += `<li class="list-group-item">`;
+                    htmlList += `<a href="${gps_url}${response[key]}">${key}: ${response[key]}</a>`;
+                  }
+                }
+                listElement.innerHTML = htmlList;
+              } else {
+                console.error("Element with ID 'location-list' not found!");
+              }
+            } else {
+              console.error("Unexpected response format. Expected object.");
+            } 
+          } else {
+            console.error("Error sending location data:", xhr.statusText);
+            displayMessage("There was an error sending your location data.");
+          }
+        };
+      }, function(error) {
+        console.error("Error getting location:", error.message);
+        displayMessage("Location access denied. Please enable to find safe stops.");
+      });
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+      displayMessage("This browser does not support location access.");
+    }
+  });
+</script>
 </body>
+</html>
